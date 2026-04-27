@@ -1,0 +1,5 @@
+Flask
+yfinance
+Flask-SQLAlchemy
+Flask-Login
+requests

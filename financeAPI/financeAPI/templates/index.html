@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Analysis</title>
+</head>
+<body>
+    <h1>Stock Analysis App</h1>
+    <input type="text" id="ticker" placeholder="Enter ticker symbol">
+    <button onclick="queryStock()">Query Stock</button>
+    <div id="result"></div>
+
+    <h2>Favorites</h2>
+    <button onclick="loadFavorites()">Load Favorites</button>
+    <select id="industry">
+        <option value="">All</option>
+        <option value="Technology">Technology</option>
+        <option value="Healthcare">Healthcare</option>
+        <!-- Add more industries -->
+    </select>
+    <button onclick="filterFavorites()">Filter</button>
+    <div id="favorites"></div>
+
+    <script>
+        async function queryStock() {
+            const ticker = document.getElementById('ticker').value;
+            const response = await fetch(`/stock/${ticker}`);
+            const data = await response.json();
+            if (response.ok) {
+                document.getElementById('result').innerHTML = `
+                    <p>Ticker: ${data.ticker}</p>
+                    <p>Current Price: ${data.currentPrice}</p>
+                    <p>Growth Rate: ${data.growthRate}%</p>
+                    <p>P/E: ${data.pe}</p>
+                    <p>PEG: ${data.peg}</p>
+                    <p>Industry: ${data.industry}</p>
+                    <button onclick="favoriteStock('${data.ticker}')">Favorite</button>
+                `;
+            } else {
+                alert(data.error);
+            }
+        }
+
+        async function favoriteStock(ticker) {
+            const response = await fetch(`/favorite/${ticker}`, {method: 'POST'});
+            const data = await response.json();
+            alert(data.message);
+        }
+
+        async function loadFavorites() {
+            const response = await fetch('/favorites');
+            const data = await response.json();
+            displayFavorites(data);
+        }
+
+        async function filterFavorites() {
+            const industry = document.getElementById('industry').value;
+            const response = await fetch(`/favorites?industry=${industry}`);
+            const data = await response.json();
+            displayFavorites(data);
+        }
+
+        function displayFavorites(favs) {
+            const div = document.getElementById('favorites');
+            div.innerHTML = favs.map(f => `
+                <div>
+                    <p>${f.ticker}: ${f.currentPrice}, Growth: ${f.growthRate}%, P/E: ${f.pe}, PEG: ${f.peg}, Industry: ${f.industry}</p>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
