@@ -3,3 +3,4 @@ yfinance
 Flask-SQLAlchemy
 Flask-Login
 requests
+python-dotenv

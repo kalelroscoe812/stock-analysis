@@ -3,12 +3,17 @@ import yfinance as yf
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stocks.db'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///stocks.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -29,6 +34,19 @@ class Favorite(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+def get_or_create_demo_user():
+    user = User.query.filter_by(username='demo').first()
+    if not user:
+        user = User(username='demo', password='demo')
+        db.session.add(user)
+        db.session.commit()
+    return user
+
+@app.before_request
+def auto_login_demo_user():
+    if not current_user.is_authenticated and request.endpoint not in ('login', 'static'):
+        login_user(get_or_create_demo_user())
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -36,16 +54,22 @@ def index():
 @app.route('/stock/<ticker>', methods=['GET'])
 def get_stock_data(ticker):
     try:
-        stock = yf.Ticker(ticker.upper())
-        info = stock.info
+        ticker = ticker.upper()
+        stock = yf.Ticker(ticker)
+        info = stock.info or {}
+        current_price = info.get('currentPrice') or info.get('regularMarketPrice')
 
-        if not info or 'currentPrice' not in info:
+        if current_price is None:
+            history = stock.history(period='5d')
+            if not history.empty:
+                current_price = float(history['Close'].iloc[-1])
+
+        if current_price is None:
             return jsonify({"error": "Ticker not found", "ticker": ticker}), 404
 
-        # Get financials for growth rate
-        financials = stock.financials
+        financials = stock.financials if getattr(stock, 'financials', None) is not None else {}
         growth_rate = None
-        if 'Net Income' in financials.index and len(financials.loc['Net Income']) >= 2:
+        if hasattr(financials, 'index') and 'Net Income' in financials.index and len(financials.loc['Net Income']) >= 2:
             net_income = financials.loc['Net Income']
             current = net_income.iloc[0]
             previous = net_income.iloc[1]
@@ -58,8 +82,8 @@ def get_stock_data(ticker):
             peg = growth_rate / pe
 
         data = {
-            "ticker": ticker.upper(),
-            "currentPrice": info.get("currentPrice"),
+            "ticker": ticker,
+            "currentPrice": current_price,
             "growthRate": growth_rate,
             "pe": pe,
             "peg": peg,

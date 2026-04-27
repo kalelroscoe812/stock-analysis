@@ -16,7 +16,25 @@ A web application for querying stock metrics including growth rate, P/E ratio, a
 1. Clone the repository
 2. Navigate to `financeAPI/financeAPI`
 3. Install dependencies: `pip install -r requirements.txt`
-4. Run the app: `python main.py`
+4. Create a `.env` file with the required settings
+5. Run the app: `python main.py`
+
+## Configuration
+Create a `.env` file inside `financeAPI/financeAPI` with the following values:
+
+```env
+SECRET_KEY=your-secret-key
+FLASK_APP=main.py
+FLASK_ENV=development
+```
+
+Generate a secure secret key with:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+The app now auto-logs in a demo user during development so you can use the stock analysis pages without manually visiting the login screen.
 
 ## Usage
 
