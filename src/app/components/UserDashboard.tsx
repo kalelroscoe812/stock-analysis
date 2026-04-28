@@ -6,6 +6,8 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { TrendingUp, TrendingDown, LogOut, Plus, Search } from 'lucide-react';
 
+const API_BASE = "https://refactored-lamp-wr6vgwg57rqjfp54-5000.app.github.dev";
+
 interface Stock {
   id: string;
   symbol: string;
@@ -26,21 +28,42 @@ const MOCK_STOCKS: Stock[] = [
 export function UserDashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState<{ email: string; name?: string } | null>(null);
-  const [stocks, setStocks] = useState<Stock[]>(MOCK_STOCKS);
+  const [stocks, setStocks] = useState<Stock[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (!userData) {
-      navigate('/');
-      return;
-    }
-    setUser(JSON.parse(userData));
+useEffect(() => {
+  const userData = localStorage.getItem('currentUser');
 
-    // Fetch real stock data
-    fetchRealStockData();
-  }, [navigate]);
+  if (!userData) {
+    navigate('/');
+    return;
+  }
+
+  const parsedUser = JSON.parse(userData);
+  setUser(parsedUser);
+
+  const storedStocks = localStorage.getItem(`stocks_${parsedUser.email}`);
+
+  if (storedStocks) {
+    setStocks(JSON.parse(storedStocks));
+  } else {
+    setStocks(MOCK_STOCKS);
+  }
+
+  fetchRealStockData();
+
+}, [navigate]);
+
+useEffect(() => {
+  if (!user) return;
+
+  localStorage.setItem(
+    `stocks_${user.email}`,
+    JSON.stringify(stocks)
+  );
+
+}, [stocks, user]);
 
   const fetchRealStockData = async () => {
     setLoading(true);
@@ -48,7 +71,7 @@ export function UserDashboard() {
       const updatedStocks = await Promise.all(
         MOCK_STOCKS.map(async (stock) => {
           try {
-            const response = await fetch(`http://localhost:5000/stock/${stock.symbol}`);
+            const response = await fetch(`${API_BASE}/stock/${stock.symbol}`);
             if (response.ok) {
               const data = await response.json();
               return {
@@ -73,6 +96,39 @@ export function UserDashboard() {
     }
   };
 
+  const searchStock = async () => {
+    if (!searchQuery) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/stock/${searchQuery}`);
+
+      if (!response.ok) {
+        throw new Error('Stock not found');
+      }
+
+      const data = await response.json();
+
+      const newStock: Stock = {
+        id: Date.now().toString(),
+        symbol: searchQuery.toUpperCase(),
+        name: data.name || searchQuery.toUpperCase(),
+        price: data.current_price || 0,
+        change: data.change || 0,
+        changePercent: data.change_percent || 0,
+        shares: 0,
+      };
+
+      setStocks((prev) => {
+        if (prev.some((s) => s.symbol === newStock.symbol)) return prev;
+        return [newStock, ...prev];
+      });
+
+      setSearchQuery('');
+    } catch (err) {
+      alert('Stock not found');
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('user');
     navigate('/');
@@ -81,11 +137,6 @@ export function UserDashboard() {
   const totalValue = stocks.reduce((sum, stock) => sum + (stock.price * stock.shares), 0);
   const totalChange = stocks.reduce((sum, stock) => sum + (stock.change * stock.shares), 0);
   const totalChangePercent = (totalChange / (totalValue - totalChange)) * 100;
-
-  const filteredStocks = stocks.filter(stock =>
-    stock.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    stock.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   if (!user) return null;
 
@@ -112,6 +163,8 @@ export function UserDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Portfolio Cards */}
         <div className="grid gap-6 md:grid-cols-3 mb-8">
           <Card>
             <CardHeader className="pb-2">
@@ -119,7 +172,7 @@ export function UserDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
             </CardContent>
           </Card>
@@ -130,7 +183,7 @@ export function UserDashboard() {
             </CardHeader>
             <CardContent>
               <div className={`text-3xl font-bold ${totalChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {totalChange >= 0 ? '+' : ''}${totalChange.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {totalChange >= 0 ? '+' : ''}${totalChange.toFixed(2)}
               </div>
             </CardContent>
           </Card>
@@ -141,84 +194,62 @@ export function UserDashboard() {
             </CardHeader>
             <CardContent>
               <div className={`text-3xl font-bold ${totalChangePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {totalChangePercent >= 0 ? '+' : ''}{totalChangePercent.toFixed(2)}%
+                {totalChangePercent.toFixed(2)}%
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Stocks */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Your Stocks</CardTitle>
-                <CardDescription>Track your portfolio performance</CardDescription>
-              </div>
-              <Button size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Stock
-              </Button>
-            </div>
+            <CardTitle>Your Stocks</CardTitle>
+
             <div className="mt-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
-                  placeholder="Search stocks..."
+                  placeholder="Search stocks (e.g. AAPL)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') searchStock();
+                  }}
                   className="pl-10"
                 />
               </div>
+
+              <Button onClick={searchStock} className="mt-2 w-full">
+                Search
+              </Button>
             </div>
           </CardHeader>
+
           <CardContent>
             {loading ? (
               <div className="text-center py-8">Loading stock data...</div>
             ) : (
               <div className="space-y-4">
-                {filteredStocks.map((stock) => (
-                <div
-                  key={stock.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <div className="font-semibold text-lg">{stock.symbol}</div>
-                        <div className="text-sm text-gray-600">{stock.name}</div>
-                      </div>
-                      <Badge variant="secondary" className="ml-2">
-                        {stock.shares} shares
-                      </Badge>
+                {stocks.map((stock) => (
+                  <div key={stock.id} className="flex justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <div className="font-semibold">{stock.symbol}</div>
+                      <div className="text-sm text-gray-600">{stock.name}</div>
                     </div>
-                  </div>
 
-                  <div className="text-right">
-                    <div className="font-semibold text-lg">
+                    <div>
                       ${stock.price.toFixed(2)}
-                    </div>
-                    <div className={`flex items-center justify-end text-sm ${stock.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {stock.change >= 0 ? (
-                        <TrendingUp className="w-4 h-4 mr-1" />
-                      ) : (
-                        <TrendingDown className="w-4 h-4 mr-1" />
-                      )}
-                      {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)} ({stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%)
+                      <div className={stock.change >= 0 ? 'text-green-600' : 'text-red-600'}>
+                        {stock.change.toFixed(2)} ({stock.changePercent.toFixed(2)}%)
+                      </div>
                     </div>
                   </div>
-
-                  <div className="text-right ml-8">
-                    <div className="text-sm text-gray-600">Value</div>
-                    <div className="font-semibold">
-                      ${(stock.price * stock.shares).toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
+
       </main>
     </div>
   );
