@@ -2,12 +2,14 @@ from flask import Flask, jsonify, request, render_template
 import yfinance as yf
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///stocks.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -54,46 +56,72 @@ def index():
 @app.route('/stock/<ticker>', methods=['GET'])
 def get_stock_data(ticker):
     try:
-        ticker = ticker.upper()
+        ticker = str(ticker).strip().upper()
+        if not ticker:
+            return jsonify({"error": "Ticker is required", "ticker": ticker}), 400
+            
         stock = yf.Ticker(ticker)
         info = stock.info or {}
-        current_price = info.get('currentPrice') or info.get('regularMarketPrice')
+        current_price = None
+        
+        # Try multiple methods to get price
+        current_price = info.get('currentPrice')
+        if current_price is None:
+            current_price = info.get('regularMarketPrice')
+        
+        if current_price is None:
+            try:
+                history = stock.history(period='1y', interval='1d')
+                if history is not None and not history.empty:
+                    current_price = float(history['Close'].iloc[-1])
+            except:
+                pass
+        
+        if current_price is None:
+            try:
+                # Get latest quote
+                data_dict = yf.download(ticker, period='1d', progress=False)
+                if data_dict is not None and not data_dict.empty and 'Close' in data_dict.columns:
+                    current_price = float(data_dict['Close'].iloc[-1])
+            except:
+                pass
 
         if current_price is None:
-            history = stock.history(period='5d')
-            if not history.empty:
-                current_price = float(history['Close'].iloc[-1])
+            return jsonify({"error": f"Could not fetch data for ticker {ticker}. Please check the symbol.", "ticker": ticker}), 404
 
-        if current_price is None:
-            return jsonify({"error": "Ticker not found", "ticker": ticker}), 404
-
-        financials = stock.financials if getattr(stock, 'financials', None) is not None else {}
+        financials = stock.financials
         growth_rate = None
-        if hasattr(financials, 'index') and 'Net Income' in financials.index and len(financials.loc['Net Income']) >= 2:
-            net_income = financials.loc['Net Income']
-            current = net_income.iloc[0]
-            previous = net_income.iloc[1]
-            if previous != 0:
-                growth_rate = ((current - previous) / previous) * 100
+        if financials is not None and not financials.empty and 'Net Income' in financials.index:
+            try:
+                net_income = financials.loc['Net Income']
+                if len(net_income) >= 2:
+                    current = float(net_income.iloc[0])
+                    previous = float(net_income.iloc[1])
+                    if previous != 0:
+                        growth_rate = ((current - previous) / previous) * 100
+            except:
+                pass
 
-        pe = info.get('trailingPE')
+        pe = info.get('trailingPE') or info.get('forwardPE')
         peg = None
-        if growth_rate and pe and pe != 0:
+        if growth_rate is not None and pe is not None and pe > 0:
             peg = growth_rate / pe
 
         data = {
             "ticker": ticker,
-            "currentPrice": current_price,
-            "growthRate": growth_rate,
-            "pe": pe,
-            "peg": peg,
+            "currentPrice": round(current_price, 2),
+            "growthRate": round(growth_rate, 2) if growth_rate else None,
+            "pe": round(pe, 2) if pe else None,
+            "peg": round(peg, 4) if peg else None,
             "industry": info.get("industry")
         }
 
         return jsonify(data)
 
     except Exception as e:
-        return jsonify({"error": str(e), "ticker": ticker}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Server error: {str(e)}", "ticker": ticker}), 500
 
 @app.route('/favorite/<ticker>', methods=['POST'])
 @login_required

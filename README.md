@@ -1,67 +1,228 @@
-# Stock Analysis App
+📈 StockTracker – Full Stack Stock Analysis App
 
-A web application for querying stock metrics including growth rate, P/E ratio, and PEG ratio. Users can favorite stocks, view favorites, and filter by industry.
+A full-stack web application for analyzing stock performance, tracking portfolios, and managing user authentication. The app combines a React + Vite frontend with a Flask backend API to deliver real-time and mock financial data.
 
-## Features
+🚀 Features
 
-- Query stocks by ticker symbol
-- Display key metrics: Growth Rate (from net income), P/E Ratio, PEG Ratio
-- Error handling for invalid tickers
-- Favorite stocks with industry classification
-- View and search favorited stocks by industry
-- User authentication and personalized favorites
+🔐 Authentication
+User login & signup (frontend-based for development)
+Local storage session handling
+Protected dashboard route
 
-## Installation
+📊 Stock Dashboard
+View portfolio with mock + live-updated stock data
+Metrics displayed:
+Price
+Change & % Change
+Portfolio value
+Search and filter stocks
 
-1. Clone the repository
-2. Navigate to `financeAPI/financeAPI`
-3. Install dependencies: `pip install -r requirements.txt`
-4. Create a `.env` file with the required settings
-5. Run the app: `python main.py`
+🌐 Backend API (Flask)
+Fetch stock data via:
+GET /stock/<ticker>
+Supports:
+Growth rate
+P/E ratio
+PEG ratio
+Favorites system (backend-supported)
 
-## Configuration
-Create a `.env` file inside `financeAPI/financeAPI` with the following values:
+🛠️ Tech Stack
+Frontend
+React (Vite)
+TypeScript
+TailwindCSS
+React Router
+Lucide Icons
+Backend
+Flask
+yfinance
+SQLAlchemy
+Flask-Login
+Flask-CORS
 
-```env
+⚙️ Installation
+1. Clone the Repository
+git clone <https://github.com/kalelroscoe812/stock-analysis.git>
+cd stock-analysis
+
+🖥️ Frontend Setup
+npm install
+npm run dev
+
+App runs at:
+
+http://localhost:5173
+
+🧠 Backend Setup
+cd financeAPI/financeAPI
+pip install -r requirements.txt
+Create .env file:
 SECRET_KEY=your-secret-key
 FLASK_APP=main.py
 FLASK_ENV=development
-```
 
-Generate a secure secret key with:
+Run backend:
 
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
+python main.py
 
-The app now auto-logs in a demo user during development so you can use the stock analysis pages without manually visiting the login screen.
+Backend runs at:
 
-## Usage
+http://localhost:5000
+🔗 Important Configuration
+✅ Enable CORS (Required)
 
-- Access the app at `http://localhost:5000`
-- Login to access favorites
-- Query stocks and favorite them
+In main.py:
 
-## API Endpoints
+from flask_cors import CORS
+CORS(app)
 
-- `GET /stock/<ticker>`: Get stock metrics
-- `POST /favorite/<ticker>`: Favorite a stock (requires login)
-- `GET /favorites`: Get user's favorites (requires login)
+📡 API Endpoints
+Method	Endpoint	Description
+GET	/stock/<ticker>	Fetch stock metrics
+POST	/favorite/<ticker>	Add favorite
+GET	/favorites	Get favorites
 
-## Testing
+🧪 Testing
+python -m unittest tests/test_main.py
 
-Run tests with: `python -m unittest tests/test_main.py`
+⚠️ Known Issues & Fixes
 
-## Technologies
+❌ Vite CSS / PostCSS Errors
+Cause: ESM vs CommonJS config mismatch
+Fix: Use postcss.config.cjs
 
-- Flask
-- yfinance
-- SQLAlchemy
-- Flask-Login
+❌ Blank Screen (Frontend)
 
-## Team
+Causes encountered:
 
-- Justin
-- Paul
-- Kalel
-- Daniel
+Wrong import:
+
+import { useNavigate } from 'react-router' // ❌
+
+✅ Fixed:
+
+import { useNavigate } from 'react-router-dom'
+
+Other issues:
+
+Syntax error ()q in main.tsx)
+Component returning null when user not found
+
+❌ CORS Errors
+Frontend (5173) vs Backend (5000)
+Fixed using Flask-CORS
+
+❌ Tailwind Not Rendering
+Caused by config syntax errors
+Fixed by correcting tailwind.config.js
+
+👥 Team & Task Summary
+👨‍💻 Justin – Backend & Authentication (AUTH-001)
+
+Responsibilities:
+
+Implement secure authentication
+Handle backend logic and API reliability
+
+Completed:
+
+Basic authentication flow (frontend + localStorage)
+Flask API endpoints for stock data
+Error handling in API routes
+
+Challenges:
+
+Authentication not fully integrated (Flask-Login vs frontend auth mismatch)
+Session management not yet unified across frontend/backend
+
+📊 Paul – Data & Enhancements (DATA-002)
+
+Responsibilities:
+
+Integrate financial APIs
+Add advanced metrics
+
+Completed:
+
+Stock data fetching via backend
+Metric calculations (growth, P/E, PEG)
+Mock + live hybrid data system
+
+Challenges:
+
+API reliability & rate limiting
+Need for caching layer (Redis not yet implemented)
+
+🎨 Kalel – Frontend & UI (UI-003)
+
+Responsibilities:
+
+Build UI/UX
+Integrate frontend with backend
+
+Completed:
+
+Full React app with routing
+Login + dashboard UI
+Tailwind styling system
+Stock dashboard with search + portfolio metrics
+
+Challenges:
+
+Major debugging of Vite + Tailwind config issues
+React Router misconfiguration (react-router vs react-router-dom)
+Blank screen debugging due to runtime + config errors
+CSS pipeline failures from PostCSS misconfiguration
+
+🗄️ Daniel – Database & Testing (DB-004)
+
+Responsibilities:
+
+Database optimization
+Testing and CI/CD
+
+Completed:
+
+SQLAlchemy setup
+Favorites structure
+Initial unit tests
+
+Challenges:
+
+Database not fully integrated with frontend yet
+Limited test coverage for edge cases
+CI/CD pipeline not fully configured
+
+🧠 Key Lessons Learned
+1. ⚠️ Configuration matters more than code
+
+Small config issues (PostCSS, Tailwind, Vite) caused major failures
+
+2. 🔄 ESM vs CommonJS conflicts are real
+
+Mixing module systems broke the build pipeline multiple times
+
+3. 🧪 Debugging requires isolation
+
+Replacing components with <h1> tests was critical
+
+4. 🔗 Frontend & backend must align
+
+CORS and API availability were blockers
+
+5. ⚠️ Silent failures are dangerous
+
+Returning null in React led to invisible bugs
+
+🚀 Future Improvements
+Full backend authentication integration (Flask-Login ↔ React)
+Real-time stock data with caching (Redis)
+Charts & analytics (Chart.js / Recharts)
+Deployment (Docker + CI/CD)
+Database migrations (Flask-Migrate)
+
+👥 Team
+Justin
+Paul
+Kalel
+Daniel
