@@ -40,34 +40,79 @@ SQLAlchemy
 Flask-Login
 Flask-CORS
 
-⚙️ Installation
-1. Clone the Repository
-git clone <https://github.com/kalelroscoe812/stock-analysis.git>
+⚙️ Installation & Initialization
+
+🖥️ Option 1: Local Setup (Mac / Linux / Windows)
+1. Clone Repository
+git clone <repo-url>
 cd stock-analysis
-
-🖥️ Frontend Setup
-npm install
-npm run dev
-
-App runs at:
-
-http://localhost:5173
-
-🧠 Backend Setup
+2. Backend Setup
 cd financeAPI/financeAPI
+Create virtual environment
+
+Mac/Linux:
+
+python -m venv venv
+source venv/bin/activate
+
+Windows:
+
+python -m venv venv
+venv\\Scripts\\activate
+Install dependencies
 pip install -r requirements.txt
-Create .env file:
-SECRET_KEY=your-secret-key
+pip install flask-cors
+Create .env file
+SECRET_KEY=devkey
 FLASK_APP=main.py
 FLASK_ENV=development
-
-Run backend:
-
+Run backend
 python main.py
 
 Backend runs at:
 
 http://localhost:5000
+3. Frontend Setup (new terminal)
+cd stock-analysis
+npm install
+npm run dev
+
+Frontend runs at:
+
+http://localhost:5173
+☁️ Option 2: GitHub Codespaces (Linux Environment)
+1. Open project in Codespaces
+cd /workspaces/stock-analysis
+2. Backend Setup
+cd financeAPI/financeAPI
+
+⚠️ Fix venv issue (IMPORTANT)
+
+Codespaces may fail with symlink errors, so use:
+
+rm -rf venv
+python -m venv venv --copies
+Activate environment (Linux only)
+source venv/bin/activate
+Install dependencies
+pip install -r requirements.txt
+pip install flask-cors
+Run backend
+python main.py
+3. Frontend Setup (new terminal)
+cd /workspaces/stock-analysis
+npm install
+npm run dev
+
+🔥 Accessing the App in Codespaces
+
+DO NOT use localhost.
+
+Instead:
+
+Open Ports tab
+Find port 5173
+Click “Open in Browser”
 🔗 Important Configuration
 ✅ Enable CORS (Required)
 
@@ -75,7 +120,6 @@ In main.py:
 
 from flask_cors import CORS
 CORS(app)
-
 📡 API Endpoints
 Method	Endpoint	Description
 GET	/stock/<ticker>	Fetch stock metrics
@@ -87,34 +131,34 @@ python -m unittest tests/test_main.py
 
 ⚠️ Known Issues & Fixes
 
-❌ Vite CSS / PostCSS Errors
-Cause: ESM vs CommonJS config mismatch
-Fix: Use postcss.config.cjs
-
 ❌ Blank Screen (Frontend)
-
-Causes encountered:
 
 Wrong import:
 
 import { useNavigate } from 'react-router' // ❌
 
-✅ Fixed:
+Fix:
 
 import { useNavigate } from 'react-router-dom'
 
-Other issues:
+Other causes:
 
-Syntax error ()q in main.tsx)
-Component returning null when user not found
+Syntax error in main.tsx
+Component returning null
+
+❌ Tailwind / CSS Not Working
+Fix PostCSS config → use:
+postcss.config.cjs
 
 ❌ CORS Errors
-Frontend (5173) vs Backend (5000)
+Backend must allow frontend requests
 Fixed using Flask-CORS
 
-❌ Tailwind Not Rendering
-Caused by config syntax errors
-Fixed by correcting tailwind.config.js
+❌ Backend Not Responding
+Ensure:
+http://localhost:5000/stock/AAPL
+
+returns JSON
 
 👥 Team & Task Summary
 👨‍💻 Justin – Backend & Authentication (AUTH-001)
