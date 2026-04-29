@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
+import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { TrendingUp, TrendingDown, LogOut, Search } from 'lucide-react';
 
@@ -25,6 +26,7 @@ export function UserDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Load User and User-Specific Stocks
   useEffect(() => {
     const userData = localStorage.getItem('currentUser');
     const token = localStorage.getItem('token');
@@ -43,6 +45,7 @@ export function UserDashboard() {
     }
   }, [navigate]);
 
+  // Persistent Auto-Save per user
   useEffect(() => {
     if (!user) return;
     localStorage.setItem(`stocks_${user.email}`, JSON.stringify(stocks));
@@ -81,12 +84,21 @@ export function UserDashboard() {
     }
   };
 
+  const updateShares = (symbol: string, newShares: number) => {
+    setStocks((prev) =>
+      prev.map((stock) =>
+        stock.symbol === symbol ? { ...stock, shares: newShares } : stock
+      )
+    );
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('token');
     navigate('/');
   };
 
+  // Calculations for Portfolio Header
   const totalValue = stocks.reduce((sum, stock) => sum + (stock.price * stock.shares), 0);
   const totalChange = stocks.reduce((sum, stock) => sum + (stock.change * stock.shares), 0);
   const totalChangePercent = totalValue > 0 ? (totalChange / (totalValue - totalChange)) * 100 : 0;
@@ -114,6 +126,7 @@ export function UserDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Portfolio Stats Row */}
         <div className="grid gap-6 md:grid-cols-3 mb-8">
           <Card>
             <CardHeader className="pb-2">
@@ -121,23 +134,23 @@ export function UserDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>Total Change</CardDescription>
+              <CardDescription>Total Daily Change</CardDescription>
             </CardHeader>
             <CardContent>
               <div className={`text-3xl font-bold ${totalChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {totalChange >= 0 ? '+' : ''}${totalChange.toFixed(2)}
+                {totalChange >= 0 ? '+' : ''}${totalChange.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>Change Percent</CardDescription>
+              <CardDescription>Portfolio Growth</CardDescription>
             </CardHeader>
             <CardContent>
               <div className={`text-3xl font-bold ${totalChangePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -147,14 +160,15 @@ export function UserDashboard() {
           </Card>
         </div>
 
+        {/* Search and Stock List */}
         <Card>
           <CardHeader>
-            <CardTitle>Your Stocks</CardTitle>
+            <CardTitle>Your Portfolio Holdings</CardTitle>
             <div className="mt-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
-                  placeholder="Search stocks (e.g. AAPL)"
+                  placeholder="Search and add a ticker (e.g. NVDA)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') searchStock(); }}
@@ -169,23 +183,44 @@ export function UserDashboard() {
           <CardContent>
             <div className="space-y-4">
               {stocks.map((stock) => (
-                <div key={stock.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                  <div>
+                <div key={stock.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 bg-gray-50 rounded-lg gap-4 border border-gray-100">
+                  <div className="flex-1">
                     <div className="font-semibold flex items-center gap-2">
                       {stock.symbol}
                       <Badge variant="secondary">{stock.shares} shares</Badge>
                     </div>
                     <div className="text-sm text-gray-600">{stock.name}</div>
                   </div>
+
+                  {/* Share Input Field */}
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs font-bold uppercase text-gray-500">Update Shares:</Label>
+                    <Input
+                      type="number"
+                      className="w-24 h-9 bg-white"
+                      value={stock.shares}
+                      onChange={(e) => updateShares(stock.symbol, Number(e.target.value))}
+                      min="0"
+                    />
+                  </div>
+
                   <div className="text-right">
                     <div className="font-semibold text-lg">${stock.price.toFixed(2)}</div>
                     <div className={`flex items-center justify-end text-sm ${stock.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {stock.change >= 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
                       {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)} ({stock.changePercent.toFixed(2)}%)
                     </div>
+                    <div className="text-xs font-semibold text-gray-400 mt-1">
+                      Holdings: ${(stock.price * stock.shares).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </div>
                   </div>
                 </div>
               ))}
+              {stocks.length === 0 && (
+                <div className="text-center py-10 text-gray-400">
+                  Your portfolio is empty. Search for a stock to get started.
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

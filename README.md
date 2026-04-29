@@ -1,272 +1,81 @@
-📈 StockTracker – Full Stack Stock Analysis App
+📈 StockTracker – Full-Stack Portfolio Manager
+A professional full-stack web application for real-time stock analysis and persistent portfolio tracking. This project features a React (Vite) frontend and a Python (Flask) REST API, utilizing secure JWT authentication and real-market data synchronization.
 
-A full-stack web application for analyzing stock performance, tracking portfolios, and managing user authentication. The app combines a React + Vite frontend with a Flask backend API to deliver real-time and mock financial data.
+🚀 Key Features
+🔐 Secure JWT Authentication: Real backend user registration and login using flask-jwt-extended.
 
-🚀 Features
+📊 Live Market Sync: Real-time stock data (Price, Day Change, %) fetched via the Yahoo Finance API.
 
-🔐 Authentication
-User login & signup (frontend-based for development)
-Local storage session handling
-Protected dashboard route
+💾 Persistent Multi-User Portfolios: Each user maintains a private, persistent list of stock holdings.
 
-📊 Stock Dashboard
-View portfolio with mock + live-updated stock data
-Metrics displayed:
-Price
-Change & % Change
-Portfolio value
-Search and filter stocks
+🔢 Dynamic Asset Tracking: Real-time calculation of total portfolio value and growth percentages based on user-inputted share counts.
 
-🌐 Backend API (Flask)
-Fetch stock data via:
-GET /stock/<ticker>
-Supports:
-Growth rate
-P/E ratio
-PEG ratio
-Favorites system (backend-supported)
+👥 Team Contributions & Hiccup Resolution
+We turned every technical "hiccup" into a learning milestone. Here is how our team roles tackled the project's most relevant challenges:
+
+👨‍💻 Justin (Lead: Backend & Auth): * Task: Integrated flask-jwt-extended to replace local-only sessions.
+
+Hiccup Resolved: Debugged the "500 Internal Server Error" by forcing database table creation (db.create_all) inside the Flask app context, ensuring the SQLite stocks.db was always ready for new users.
+
+📊 Paul (Lead: Data & Enhancements): * Task: Optimized API response structures to ensure frontend calculations matched backend data.
+
+Hiccup Resolved: Fixed the "Missing Data" bug where change and change_percent were missing from the JSON response, enabling the "Total Portfolio Change" cards to function correctly.
+
+🎨 Kalel (Lead: Frontend & UI): * Task: Built the React Dashboard and search logic.
+
+Hiccup Resolved: Solved the "Phantom CORS Error" and the "302 Redirect" issue by diagnosing GitHub Codespaces port security and implementing the API_BASE toggle system for forwarded ports.
+
+🗄️ Daniel (Lead: Database & Testing): * Task: Managed data integrity and environment stability.
+
+Hiccup Resolved: Identified that "Stale LocalStorage" was causing login failures and established the "Nuclear Reset" protocol to ensure a clean handshake between the frontend and the new backend database.
+
+⚙️ Initialization (Most Reliable Steps)
+Follow these steps in order to ensure the environment handshake is successful.
+
+1. Backend Setup (Terminal 1)
+Bash
+# Navigate and clean old data
+cd financeAPI/financeAPI
+rm -f stocks.db && rm -rf instance/
+
+# Rebuild environment
+python -m venv venv --copies
+source venv/bin/activate
+pip install flask flask-sqlalchemy flask-cors flask-jwt-extended yfinance python-dotenv
+
+# Start server
+python main.py
+2. Frontend Setup (Terminal 2)
+Bash
+# Navigate and install
+cd /workspaces/stock-analysis
+npm install
+npm run dev
+3. The "Magic Handshake" (Codespaces Only)
+To prevent CORS/302 Redirect errors:
+
+Go to the PORTS tab in Codespaces.
+
+Set Port 5000 and 5173 visibility to Public.
+
+Crucial: Right-click the URL for Port 5000 -> Open in Browser.
+
+If asked, click "Sign in to continue." Once you see the blank page or JSON, return to the app on Port 5173.
+
+Open the browser console (F12), type localStorage.clear(), and refresh.
+
+🧠 Lessons Learned
+CORS is often a symptom, not the cause: Many "CORS errors" were actually backend 500 crashes or GitHub login redirects disguised as header issues.
+
+Environment Sync: Cloud development (Codespaces) requires specific port visibility management that local dev does not.
+
+Silent Failures: Using if (!user) return null taught us to always implement visible error handling to avoid "invisible" UI bugs.
 
 🛠️ Tech Stack
-Frontend
-React (Vite)
-TypeScript
-TailwindCSS
-React Router
-Lucide Icons
-Backend
-Flask
-yfinance
-SQLAlchemy
-Flask-Login
-Flask-CORS
+Frontend: React, Vite, TypeScript, TailwindCSS, Lucide Icons
 
-⚙️ Installation & Initialization
+Backend: Python, Flask, SQLAlchemy, Flask-JWT-Extended
 
-🖥️ Option 1: Local Setup (Mac / Linux / Windows)
-1. Clone Repository
-git clone <repo-url>
-cd stock-analysis
-2. Backend Setup
-cd financeAPI/financeAPI
-Create virtual environment
+Data: Yahoo Finance API (yfinance)
 
-Mac/Linux:
-
-python -m venv venv
-source venv/bin/activate
-
-Windows:
-
-python -m venv venv
-venv\\Scripts\\activate
-Install dependencies
-pip install -r requirements.txt
-pip install flask-cors
-Create .env file
-SECRET_KEY=devkey
-FLASK_APP=main.py
-FLASK_ENV=development
-Run backend
-python main.py
-
-Backend runs at:
-
-http://localhost:5000
-3. Frontend Setup (new terminal)
-cd stock-analysis
-npm install
-npm run dev
-
-Frontend runs at:
-
-http://localhost:5173
-☁️ Option 2: GitHub Codespaces (Linux Environment)
-1. Open project in Codespaces
-cd /workspaces/stock-analysis
-2. Backend Setup
-cd financeAPI/financeAPI
-
-⚠️ Fix venv issue (IMPORTANT)
-
-Codespaces may fail with symlink errors, so use:
-
-rm -rf venv
-python -m venv venv --copies
-Activate environment (Linux only)
-source venv/bin/activate
-Install dependencies
-pip install -r requirements.txt
-pip install flask-cors
-Run backend
-python main.py
-3. Frontend Setup (new terminal)
-cd /workspaces/stock-analysis
-npm install
-npm run dev
-
-🔥 Accessing the App in Codespaces
-
-DO NOT use localhost.
-
-Instead:
-
-Open Ports tab
-Find port 5173
-Click “Open in Browser”
-🔗 Important Configuration
-✅ Enable CORS (Required)
-
-In main.py:
-
-from flask_cors import CORS
-CORS(app)
-📡 API Endpoints
-Method	Endpoint	Description
-GET	/stock/<ticker>	Fetch stock metrics
-POST	/favorite/<ticker>	Add favorite
-GET	/favorites	Get favorites
-
-🧪 Testing
-python -m unittest tests/test_main.py
-
-⚠️ Known Issues & Fixes
-
-❌ Blank Screen (Frontend)
-
-Wrong import:
-
-import { useNavigate } from 'react-router' // ❌
-
-Fix:
-
-import { useNavigate } from 'react-router-dom'
-
-Other causes:
-
-Syntax error in main.tsx
-Component returning null
-
-❌ Tailwind / CSS Not Working
-Fix PostCSS config → use:
-postcss.config.cjs
-
-❌ CORS Errors
-Backend must allow frontend requests
-Fixed using Flask-CORS
-
-❌ Backend Not Responding
-Ensure:
-http://localhost:5000/stock/AAPL
-
-returns JSON
-
-👥 Team & Task Summary
-👨‍💻 Justin – Backend & Authentication (AUTH-001)
-
-Responsibilities:
-
-Implement secure authentication
-Handle backend logic and API reliability
-
-Completed:
-
-Basic authentication flow (frontend + localStorage)
-Flask API endpoints for stock data
-Error handling in API routes
-
-Challenges:
-
-Authentication not fully integrated (Flask-Login vs frontend auth mismatch)
-Session management not yet unified across frontend/backend
-
-📊 Paul – Data & Enhancements (DATA-002)
-
-Responsibilities:
-
-Integrate financial APIs
-Add advanced metrics
-
-Completed:
-
-Stock data fetching via backend
-Metric calculations (growth, P/E, PEG)
-Mock + live hybrid data system
-
-Challenges:
-
-API reliability & rate limiting
-Need for caching layer (Redis not yet implemented)
-
-🎨 Kalel – Frontend & UI (UI-003)
-
-Responsibilities:
-
-Build UI/UX
-Integrate frontend with backend
-
-Completed:
-
-Full React app with routing
-Login + dashboard UI
-Tailwind styling system
-Stock dashboard with search + portfolio metrics
-
-Challenges:
-
-Major debugging of Vite + Tailwind config issues
-React Router misconfiguration (react-router vs react-router-dom)
-Blank screen debugging due to runtime + config errors
-CSS pipeline failures from PostCSS misconfiguration
-
-🗄️ Daniel – Database & Testing (DB-004)
-
-Responsibilities:
-
-Database optimization
-Testing and CI/CD
-
-Completed:
-
-SQLAlchemy setup
-Favorites structure
-Initial unit tests
-
-Challenges:
-
-Database not fully integrated with frontend yet
-Limited test coverage for edge cases
-CI/CD pipeline not fully configured
-
-🧠 Key Lessons Learned
-1. ⚠️ Configuration matters more than code
-
-Small config issues (PostCSS, Tailwind, Vite) caused major failures
-
-2. 🔄 ESM vs CommonJS conflicts are real
-
-Mixing module systems broke the build pipeline multiple times
-
-3. 🧪 Debugging requires isolation
-
-Replacing components with <h1> tests was critical
-
-4. 🔗 Frontend & backend must align
-
-CORS and API availability were blockers
-
-5. ⚠️ Silent failures are dangerous
-
-Returning null in React led to invisible bugs
-
-🚀 Future Improvements
-Full backend authentication integration (Flask-Login ↔ React)
-Real-time stock data with caching (Redis)
-Charts & analytics (Chart.js / Recharts)
-Deployment (Docker + CI/CD)
-Database migrations (Flask-Migrate)
-
-👥 Team
-Justin
-Paul
-Kalel
-Daniel
+StockTracker – Built with passion and a lot of debugging.
