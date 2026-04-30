@@ -16,7 +16,16 @@ app = Flask(__name__)
 # CONFIGURATION
 # =======================
 # Allow CORS so Vite can connect securely
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+CORS(app, resources={r"/*": {
+    "origins": "*",
+    "allow_headers": ["Content-Type", "Authorization", "Access-Control-Allow-Private-Network"],
+    "methods": ["GET", "POST", "OPTIONS"]
+}}, supports_credentials=True)
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers.add("Access-Control-Allow-Private-Network", "true")
+    return response
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///stocks.db')

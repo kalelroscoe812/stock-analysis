@@ -7,7 +7,7 @@ import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { TrendingUp, TrendingDown, LogOut, Search } from 'lucide-react';
 
-const API_BASE = "https://refactored-lamp-wr6vgwg57rqjfp54-5000.app.github.dev";
+const API_BASE = "http://localhost:5000";
 
 interface Stock {
   id: string;

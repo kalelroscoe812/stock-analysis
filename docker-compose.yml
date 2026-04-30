@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: ./financeAPI/financeAPI
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=sqlite:///stocks.db
+      - JWT_SECRET_KEY=super-secure-jwt-key
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    depends_on:
+      - backend

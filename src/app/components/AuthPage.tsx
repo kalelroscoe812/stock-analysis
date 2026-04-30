@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { TrendingUp } from 'lucide-react';
 
-const API_BASE = "https://refactored-lamp-wr6vgwg57rqjfp54-5000.app.github.dev";
+const API_BASE = "http://localhost:5000";
 
 export function AuthPage() {
   const navigate = useNavigate();

@@ -1,81 +1,66 @@
-📈 StockTracker – Full-Stack Portfolio Manager
-A professional full-stack web application for real-time stock analysis and persistent portfolio tracking. This project features a React (Vite) frontend and a Python (Flask) REST API, utilizing secure JWT authentication and real-market data synchronization.
+# 📈 StockTracker – Full-Stack Portfolio Manager
 
-🚀 Key Features
-🔐 Secure JWT Authentication: Real backend user registration and login using flask-jwt-extended.
+A professional-grade portfolio management tool. This application synchronizes a **React (Vite) frontend** with a **Python (Flask) REST API** to provide real-market data tracking, secure user authentication, and persistent asset valuation.
 
-📊 Live Market Sync: Real-time stock data (Price, Day Change, %) fetched via the Yahoo Finance API.
+---
 
-💾 Persistent Multi-User Portfolios: Each user maintains a private, persistent list of stock holdings.
+### 🚀 Key Features
 
-🔢 Dynamic Asset Tracking: Real-time calculation of total portfolio value and growth percentages based on user-inputted share counts.
+* **🔐 JWT-Powered Security:** Secure registration and login flow using `Flask-JWT-Extended` to protect user data.
+* **📊 Live Market Data:** Real-time stock metrics (Price, Day Change, %) fetched dynamically via the Yahoo Finance API (`yfinance`).
+* **🐋 Dockerized Architecture:** Fully containerized services using Docker Compose for seamless deployment and environment parity across Mac, Windows, and Linux.
+* **🔢 Dynamic Portfolio Valuation:** Real-time calculation of total portfolio value and growth metrics based on user-inputted share counts.
 
-👥 Team Contributions & Hiccup Resolution
-We turned every technical "hiccup" into a learning milestone. Here is how our team roles tackled the project's most relevant challenges:
+---
 
-👨‍💻 Justin (Lead: Backend & Auth): * Task: Integrated flask-jwt-extended to replace local-only sessions.
+### 👥 Team Contributions & Milestone Victories
 
-Hiccup Resolved: Debugged the "500 Internal Server Error" by forcing database table creation (db.create_all) inside the Flask app context, ensuring the SQLite stocks.db was always ready for new users.
+We transformed technical roadblocks into system-wide improvements. Here is how our team collaborated to build the final production-ready architecture:
 
-📊 Paul (Lead: Data & Enhancements): * Task: Optimized API response structures to ensure frontend calculations matched backend data.
+* **👨‍💻 Justin (Lead: Backend & Auth)**
+  * **The Win:** Implemented the JWT architecture and forced database initialization within the Flask app context.
+  * **Hiccup Resolved:** Debugged the **"500 Internal Server Error"** by ensuring the SQLite schema (`stocks.db`) was generated before the first request ever hit the server.
 
-Hiccup Resolved: Fixed the "Missing Data" bug where change and change_percent were missing from the JSON response, enabling the "Total Portfolio Change" cards to function correctly.
+* **📊 Paul (Lead: Data & API)**
+  * **The Win:** Standardized the API JSON responses for consumption by the React frontend.
+  * **Hiccup Resolved:** Fixed the **"Empty Metric"** bug by ensuring the backend always provided fallback `0.0` values for `regularMarketChange` and `changePercent`.
 
-🎨 Kalel (Lead: Frontend & UI): * Task: Built the React Dashboard and search logic.
+* **🎨 Kalel (Lead: Frontend & UI)**
+  * **The Win:** Built the responsive React Dashboard and the dynamic "Update Shares" state logic.
+  * **Hiccup Resolved:** Defeated the **"Phantom CORS"** boss. Diagnosed that Microsoft Dev Tunnels were intercepting preflight `OPTIONS` requests, and successfully re-routed the frontend directly to `http://localhost:5000` to establish a clean, proxy-free handshake.
 
-Hiccup Resolved: Solved the "Phantom CORS Error" and the "302 Redirect" issue by diagnosing GitHub Codespaces port security and implementing the API_BASE toggle system for forwarded ports.
+* **🗄️ Daniel (Lead: DevOps & Testing)**
+  * **The Win:** Orchestrated the transition to Docker Compose and managed local volume persistence.
+  * **Hiccup Resolved:** Solved the **"Pip ReadTimeoutError"** during the container build by optimizing the `requirements.txt` to leverage Docker's layer caching, reducing build times and eliminating network bottleneck failures.
 
-🗄️ Daniel (Lead: Database & Testing): * Task: Managed data integrity and environment stability.
+---
 
-Hiccup Resolved: Identified that "Stale LocalStorage" was causing login failures and established the "Nuclear Reset" protocol to ensure a clean handshake between the frontend and the new backend database.
+### 🛠️ Tech Stack
 
-⚙️ Initialization (Most Reliable Steps)
-Follow these steps in order to ensure the environment handshake is successful.
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React (Vite), TypeScript, TailwindCSS, Lucide Icons |
+| **Backend** | Python, Flask, SQLAlchemy, Flask-JWT-Extended |
+| **Data API** | Yahoo Finance (`yfinance`), Pandas, NumPy |
+| **DevOps** | Docker, Docker Compose, WSL2 |
 
-1. Backend Setup (Terminal 1)
-Bash
-# Navigate and clean old data
-cd financeAPI/financeAPI
-rm -f stocks.db && rm -rf instance/
+---
 
-# Rebuild environment
-python -m venv venv --copies
-source venv/bin/activate
-pip install flask flask-sqlalchemy flask-cors flask-jwt-extended yfinance python-dotenv
+### ⚙️ Initialization 
 
-# Start server
-python main.py
-2. Frontend Setup (Terminal 2)
-Bash
-# Navigate and install
-cd /workspaces/stock-analysis
-npm install
-npm run dev
-3. The "Magic Handshake" (Codespaces Only)
-To prevent CORS/302 Redirect errors:
+The most reliable way to run this application is via Docker. This eliminates all `venv`, Python versioning, and Node.js conflicts.
 
-Go to the PORTS tab in Codespaces.
+**Prerequisites:**
+* Docker Desktop installed and running.
+* Git cloned to your local machine.
 
-Set Port 5000 and 5173 visibility to Public.
+**Steps:**
+1. Navigate to the root directory of the project:
+   ```bash
+   cd stock-analysis
 
-Crucial: Right-click the URL for Port 5000 -> Open in Browser.
+docker-compose up --build
 
-If asked, click "Sign in to continue." Once you see the blank page or JSON, return to the app on Port 5173.
+Access the App: Open your browser and navigate to http://localhost:5173.
 
-Open the browser console (F12), type localStorage.clear(), and refresh.
-
-🧠 Lessons Learned
-CORS is often a symptom, not the cause: Many "CORS errors" were actually backend 500 crashes or GitHub login redirects disguised as header issues.
-
-Environment Sync: Cloud development (Codespaces) requires specific port visibility management that local dev does not.
-
-Silent Failures: Using if (!user) return null taught us to always implement visible error handling to avoid "invisible" UI bugs.
-
-🛠️ Tech Stack
-Frontend: React, Vite, TypeScript, TailwindCSS, Lucide Icons
-
-Backend: Python, Flask, SQLAlchemy, Flask-JWT-Extended
-
-Data: Yahoo Finance API (yfinance)
-
-StockTracker – Built with passion and a lot of debugging.
+Backend API: The Flask server runs silently in the background at http://localhost:5000.
